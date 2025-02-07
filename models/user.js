@@ -1,52 +1,66 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
-module.exports = (sequelize, DataTypes) => {
+const { Model, DataTypes } = require('sequelize');
+
+module.exports = (sequelize) => {
   class User extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
-      // define association here
+      // Define associations here
     }
   }
-  User.init({
-    id: {
-      allowNull: false,
-      primaryKey: true,
-      type: DataTypes.UUID
+
+  User.init(
+    {
+      id: {
+        allowNull: false,
+        primaryKey: true,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4, // ✅ Automatically generates UUID
+      },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+        validate: { isEmail: true },
+      },
+      password: {
+        type: DataTypes.STRING,
+        allowNull: false, // ✅ Ensures password is always required
+      },
+      isVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false, // ✅ Default is `false`
+      },
+      verificationOTP: {
+        type: DataTypes.STRING,
+      },
+      otpExpiredAt: {
+        type: DataTypes.DATE,
+      },
+      profileImage: {
+        type: DataTypes.STRING,
+      },
+      createdAt: {
+        allowNull: false,
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW, // ✅ Ensures timestamps work
+      },
+      updatedAt: {
+        allowNull: false,
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW, // ✅ Ensures timestamps work
+      },
     },
-    name:{
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-      validate: {
-        isEmail: true
-      }
-    },
-    password: DataTypes.STRING,
-    isVerified: DataTypes.BOOLEAN,
-    verificationOTP: DataTypes.STRING,
-    otpExpiredAt: DataTypes.DATE,
-    profileImage: DataTypes.STRING,
-    createdAt: {
-      allowNull: false,
-      type: DataTypes.DATE
-    },
-    updatedAt: {
-      allowNull: false,
-      type: DataTypes.DATE
+    {
+      sequelize,
+      modelName: 'User',
+      tableName: 'User', 
+      freezeTableName: true, 
     }
-  }, {
-    sequelize,
-    modelName: 'User',
-  });
+  );
+
   return User;
 };

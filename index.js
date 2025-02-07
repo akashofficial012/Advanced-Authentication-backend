@@ -2,14 +2,18 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { Sequelize } = require('sequelize');
-
+var bodyParser = require('body-parser')
 dotenv.config();
+const authRoute = require('./routes/authRoute');
 
 const app = express();
-const port = 3000;
 
-app.use(cors());
+const port = 3000;
+app.use(bodyParser.json());
 app.use(express.json());
+app.use(cors());
+
+app.use('/api/v1/', authRoute);
 
 const sequelize = new Sequelize('authentication', 'postgres', 'Akash123', {
     host: '127.0.0.1',
@@ -23,10 +27,6 @@ async function connectDb() {
         console.error('Unable to connect to the database:', error);
       }
 }
-
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
 
 app.listen(port, async () => {
     await connectDb();
