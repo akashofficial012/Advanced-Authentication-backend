@@ -74,36 +74,31 @@ const verifyEmail = async (req, res) => {
     }
   };
 
-  const singin = async (req, res) => {
+  const signin = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const user = await model.User.findOne({ where: { email } });
-        if (!user) {
-            return responde(res, 400, 'Invalid email or password');
-        }
-        if (!user.isVerified) {
-            return responde(res, 400, 'Please verify your email');
-        }
-
-        const isPasswordMatch = await bcrypt.compare(password, user.password);
-        if (!isPasswordMatch) {
-            return responde(res, 400, 'Invalid email or password');
-        }
-
-        const token = await generateToken(user);
-        res.cookie('token', token, { maxage: 360000 });
-
-        return responde(res, 200, 'User logged in successfully', {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            isVerified: user.isVerified,
-        });
+      const { email, password } = req.body;
+      const user = await model.User.findOne({ where: { email } });
+  
+      if (!user) return responde(res, 404, "User not found");
+  
+      if (!user.isVerified) return responde(res, 404, "User not verified");
+  
+      const isMatchPassword = await bcrypt.compare(password, user.password);
+      if (!isMatchPassword) return responde(res, 400, "password is invalid");
+  
+      const token = generateToken(user);
+      res.cookie("token", token, { maxAge: 3600000 });
+  
+      return responde(res, 200, "User logged in successfully", {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        isVerified: user.isVerified,
+      });
     } catch (error) {
-        console.log(error);
-        return responde(res, 500, 'somethings went wrong');
+      return responde(res, 500, "something went wrong");
     }
-  }
+  };
           
   const forgetPassword = async (req, res) => {
     try {
@@ -160,4 +155,21 @@ const verifyEmail = async (req, res) => {
     }
   }
 
-module.exports = {signup, verifyEmail, singin, forgetPassword, resetPassword};
+  const getUserProfile = async (req, res) => {
+    try {
+      const userId = req.params.id;
+      if (!userId) {
+        return responde(res, 400, 'User id is required');
+      }
+      const user = await model.User.findOne({ where: { id: userId },
+      attributes: ['id', 'name', 'email', 'isVerified']
+      });
+      if (!user) {
+        return responde(res, 400, 'User not found');
+      }
+      return responde(res, 200, 'User profile fetched successfully', user);
+    } catch (error) {
+      return responde(res, 500, 'something went wrong');
+    }
+  }
+module.exports = {signup, verifyEmail, signin, forgetPassword, resetPassword , logout, getUserProfile};
