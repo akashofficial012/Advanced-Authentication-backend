@@ -151,4 +151,13 @@ const verifyEmail = async (req, res) => {
     }
   };
 
+  const logout = async (req, res) => {
+    try {
+      res.clearCookie('token');
+      return responde(res, 200, 'User logged out successfully');
+    } catch (error) {
+      return responde(res, 500, 'somethings went wrong');
+    }
+  }
+
 module.exports = {signup, verifyEmail, singin, forgetPassword, resetPassword};
