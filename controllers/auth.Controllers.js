@@ -73,7 +73,82 @@ const verifyEmail = async (req, res) => {
       return responde(res, 500, "somethings went wrong");
     }
   };
-            
 
+  const singin = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await model.User.findOne({ where: { email } });
+        if (!user) {
+            return responde(res, 400, 'Invalid email or password');
+        }
+        if (!user.isVerified) {
+            return responde(res, 400, 'Please verify your email');
+        }
 
-module.exports = {signup, verifyEmail};
+        const isPasswordMatch = await bcrypt.compare(password, user.password);
+        if (!isPasswordMatch) {
+            return responde(res, 400, 'Invalid email or password');
+        }
+
+        const token = await generateToken(user);
+        res.cookie('token', token, { maxage: 360000 });
+
+        return responde(res, 200, 'User logged in successfully', {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            isVerified: user.isVerified,
+        });
+    } catch (error) {
+        console.log(error);
+        return responde(res, 500, 'somethings went wrong');
+    }
+  }
+          
+  const forgetPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await model.User.findOne({ where: { email } });
+        if (!user) {
+            return responde(res, 400, 'User not found');
+        }
+        const verificationOTP = Math.floor(100000 + Math.random() * 900000).toString();
+        user.verificationOTP = verificationOTP;
+        user.otpExpiresAt = Date.now() + 10 * 60 * 1000;
+        await user.save();
+        await sendOtpToEmail(email, verificationOTP, user.name);
+        return responde(res, 200, 'OTP sent to your email');
+
+        
+    } catch (error) {
+        return responde(res, 500, 'somethings went wrong');
+        
+    }
+  }
+
+  const resetPassword = async (req, res) => {
+    try {
+      const { verificationOTP, newPassword } = req.body;
+  
+      const user = await model.User.findOne({ where: { verificationOTP } });
+      if (!user) {
+        return responde(res, 400, "Invalid OTP");
+      }
+  
+      if (user.otpExpiresAt < Date.now()) {
+        return responde(res, 400, "OTP expire");
+      }
+  
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      user.password = hashedPassword;
+      user.verificationOTP = null;
+      user.otpExpiresAt = null;
+      await user.save();
+      return responde(res, 200, "Password reset succesfully");
+    } catch (error) {
+      console.error(error);
+      return responde(res, 500, "something went wrong");
+    }
+  };
+
+module.exports = {signup, verifyEmail, singin, forgetPassword, resetPassword};
