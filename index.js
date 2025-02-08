@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+var cookieParser = require('cookie-parser');
 const { Sequelize } = require('sequelize');
 var bodyParser = require('body-parser')
 dotenv.config();
@@ -10,6 +11,7 @@ const app = express();
 
 const port = 3000;
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(express.json());
 app.use(cors());
 
